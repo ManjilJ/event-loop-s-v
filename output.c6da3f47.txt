@@ -1,0 +1,207 @@
+<b><font size="5">The <font color="#e5ff24">JavaScript</font> <font color="#60d16d">Event Loop:</font> A Professional's Guide</font></b>
+Welcome. You've heard about the Event Loop. You know it's why setTimeout(..., 0) doesn't run immediately. You know it has something to do with asynchronous code. But what is it, really?
+<b><font color="#60d16d">Level 1: The Core Problem &amp; The Cast of Characters</font></b>
+<font color="#60d16d"><b>JavaScript </b></font>has a simple, beautiful, yet challenging characteristic: it is <b><font color="#60d16d">single-threaded.</font></b>
+This means it can only <b><font color="#4fc1ff">do one thing at a time</font></b>. It has <b>one </b><font color="#f0ff7a">Call Stack</font>. If it's busy <font color="#ff7ae7">executing a long-running piece of code</font>, it <i><font color="#60d16d">can't do anything </font><font color="#c586c0">else</font></i>—it can't respond to user clicks, it can't process network requests, it can't even re-render the page. The UI <b><font color="#4fc1ff">freezes</font></b>.
+<pre><code>// A simple function to block the main thread
+function blockFor(ms) {
+  const end = Date.now() + ms;
+  while (Date.now() &lt; end) {}
+}
+
+console.log(&quot;Hello!&quot;);
+blockFor(5000); // The browser will be completely frozen for 5 seconds.
+console.log(&quot;Welcome back.&quot;);</code></pre>
+So how do we handle long-running operations like fetching data or waiting for a timer <b><i style=""><font color="#c586c0">without</font></i><font color="#60d16d"> freezing</font></b> the <b>entire application</b>?
+This is where the <b><font color="#60d16d">browser</font>'s</b> <b><font color="#60d16d">runtime environment </font></b>(which is <font color="#60d16d">more than</font> just the <font color="#60d16d">JavaScript engine</font>) comes in. It provides a solution, and its <font color="#ff99c2">mechanism</font> is the <b><font color="#fff199"><u>Event Loop</u></font></b>.
+To understand it, let's meet the cast:
+<font color="#f3ff99"><b>Call Stack</b></font>: The place where JavaScript <font color="#f4ffa3">keeps track</font> of what function is <font color="#f5ffa8">currently running</font>. When you call a function, it's <font color="#60d16d">pushed</font> onto the <font color="#60d16d">stack</font>. When it returns, it's <font color="#60d16d">popped</font> off. It's a "Last-In, First-Out" (<font color="#60d16d">LIFO</font>) structure.
+<font color="#f5a8ff"><b>Web APIs</b></font>: These are features <font color="#f5adff">provided by the browser</font> (or the <font color="#c586c0">Node.js environment</font>), not the JavaScript engine itself. Think of setTimeout, DOM events (click, mouseover), and fetch. They are the <b><font color="#ff335c"><i>asynchronous</i></font><font color="#f399ff"> workhorses</font></b>.
+<b><font color="#ffb433">Callback Queue</font></b> (or "<font color="#ffb638"><b>Task Queue</b></font>"): A <font color="#ffbe4d">waiting area </font>for messages (or tasks) <font color="#6678ff">to be processed</font>. <b><font color="#4fc1ff">When</font></b> <font color="#4fc1ff">a <b>Web API </b><i>finishes</i></font> its work (e.g., a timer expires, data arrives from a network request), it <i><font color="#ffc35c">doesn't just interrupt JavaScript</font></i>. Instead, <font color="#60d16d">it places a callback</font> <font color="#60d16d">function</font> <b>into this queue</b>. It's a "First-In, First-Out" (<font color="#94a0ff">FIFO</font>) structure.
+<b><font color="#94fff3">The Event Loop</font></b>: This is the star of our show. It's a simple, <font color="#4fc1ff">perpetually running process</font> whose only job is to ask <font color="#4fc1ff">one question</font>: "<i><font color="#c7fff8">Is the </font><b style=""><font color="#e5fffc">Call Stack</font></b> <b style="color: rgb(199, 255, 248);"><u>empty</u></b><font color="#c7fff8">?</font></i>"
+If <font size="5" color="#60d16d">yes</font>, it takes the <b><font color="#ce9178">first</font></b> item from the <b><font color="#d16060">Callback Queue</font></b> and <font color="#60d16d">pushes</font> it onto the&nbsp;<i><b><font color="#e5fffc">Call Stack</font></b></i>&nbsp;<font color="#60d16d"><i>for <b><u>execution</u></b></i></font>.
+If <font color="#ff2483" size="5">no</font>, it does nothing and <font color="#ff2483">waits for the next</font> "tick."
+The Classic Example: <b><font color="#60d16d">setTimeout</font></b>
+Let's trace this simple piece of code:
+<pre><code>console.log(&#039;Start&#039;); // 1
+
+setTimeout(() =&gt; {
+  console.log(&#039;Inside Timeout&#039;); // 3
+}, 1000);
+
+console.log(&#039;End&#039;); // 2</code></pre>
+<u>Here is the step-by-step execution:</u>
+console.log('Start') is <font color="#60d16d">pushed onto the </font><font color="#80f6ff">Call Stack. </font>
+<font color="#60d16d">It runs and logs</font> "Start". 
+Then it's <font color="#60d16d">popped off.</font>
+setTimeout(...) is <font color="#60d16d">pushed onto the&nbsp;</font><span style="color: rgb(128, 246, 255);">Call Stack</span>
+setTimeout is <i><font color="#60d16d" size="5">not</font></i> <font color="#60d16d">a JavaScript function</font>; <font color="#e7ff33"><b style="">it's a Web API</b>.</font>&nbsp;<div><br></div><div>The <font color="#60d16d" size="5">browser</font> <i style=""><font color="#ebff52">takes</font></i> the <font color="#ce9178">callback</font> function&nbsp;</div><div>() =&gt; console.log('Inside Timeout') and the duration 1000ms and <font color="#ebff52">starts a timer</font>.&nbsp;</div><div><br></div><div>The setTimeout call itself is <i><font color="#60d16d">now</font></i> <font color="#ff85ef"><i><b>complete</b></i></font>, so it's <font color="#ebff57">popped off </font>the&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>.</div>
+console.log('End') is <font color="#94a0ff">pushed</font> onto the&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>. It <font color="#99a5ff">runs and logs </font>"End". Then it's <font color="#a3aeff">popped off</font>.
+The&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>&nbsp;is now <b><font color="#d8ff8f">empty</font></b>. The <i><font color="#60d16d"><b>main</b> script has <b>finished</b></font></i>.
+...1000 milliseconds <i><font color="#e8ffbd">pass</font></i>...
+The <font color="#60d16d">browser's</font> timer finishes and <font color="#60d16d">pushes</font> the <font color="#ce9178">callback</font>&nbsp;<div>() =&gt; console.log('Inside Timeout')&nbsp;</div><div><i><font color="#60d16d">into</font></i> the&nbsp;<b><font color="#d16060">Callback Queue</font></b>.</div>
+The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;<i><font color="#60d16d" size="5"><b style=""><u>sees</u></b></font></i> that the&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>&nbsp;is&nbsp;<b><font color="#d8ff8f">empty</font></b>&nbsp;and that <i><font color="#60d16d"><b>there's</b></font></i> an item <b><font color="#60d16d"><i>in</i></font></b> the&nbsp;<b><font color="#d16060">Callback Queue</font></b>.
+The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;<i><font color="#60d16d">takes</font></i> the <font color="#ce9178">callback</font> from the <font color="#d16060">queue</font> and <font color="#60d16d">pushes</font> it onto the&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>.
+The <font color="#ce9178">callback</font> <b><i><font color="#60d16d"><u>executes</u></font></i></b>, console.log('Inside Timeout') is <font color="#60d16d">pushed</font> on, logs "Inside Timeout", and is <font color="#60d16d">popped</font> off. The <font color="#ce9178">callback</font> function then <font color="#60d16d">returns</font> and is <font color="#60d16d"><i>popped</i></font> off.
+The&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>&nbsp;is&nbsp;<b><font color="#d8ff8f">empty</font></b>&nbsp;again. The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;<font color="#60d16d"><i><b>waits</b></i></font> for more tasks.
+Key Takeaway: setTimeout(..., 0) doesn't mean "run this in 0ms." It means "<i><font color="#60d16d">add</font></i> this to the&nbsp;<b><font color="#d16060">Callback Queue</font></b>&nbsp;<font color="#60d16d"><i>as soon as you can</i></font>," which will only be <font color="#60d16d"><i><b><u>after</u></b></i></font> the <font color="#60d16d">current</font> <font color="#4fc1ff">script</font> <font color="#ce9178">on</font> the&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>&nbsp;<font color="#60d16d"><i>has finished</i>.</font>
+<b><font color="#4fc1ff">Level 2: Promises and the High-Priority Lane - The Microtask Queue</font></b>
+This model works well, but it has a limitation. <font color="#60d16d"><i>Sometimes</i></font> we need to do something right after the current script finishes, but before the browser does anything else (like rendering the UI or running the next task from the Callback Queue).
+This led to the creation of a second, higher-priority queue: the <b><font color="#d6ff8a">Microtask Queue</font></b> (sometimes called the "<b><font color="#d8ff8f">Job Queue</font>"</b>).
+<u>Who uses the Microtask Queue?</u>
+🔺Promise .then(), .catch(), and .finally() callbacks.
+🔺queueMicrotask()
+🔺MutationObserver
+🔺process.nextTick() (in Node.js)
+The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>'s job description just got an update:
+The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>'s New Job: After a task from the main script or the&nbsp;<b><font color="#d16060">Callback Queue&nbsp;</font></b>finishes and the&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>&nbsp;becomes empty, the&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;will first check the&nbsp;<b><font color="#d6ff8a">Microtask Queue</font></b>. It will run <b><font color="#60d16d">ALL</font></b> <font color="#ffe45c">microtasks</font> <font color="#ffe666">in the queue to <i><b>completion</b></i></font>, <font color="#60d16d"><i>one by one,</i></font> <b><font color="#60d16d">before</font> <u><font color="#c586c0">even</font></u></b> <i><font color="#60d16d">considering</font></i> <font color="#4fc1ff">looking</font> at the&nbsp;<b><font color="#d16060">Callback Queue</font></b>.
+The Decisive Example: <font color="#60d16d">setTimeout</font> vs. <font color="#4fc1ff">Promise</font>
+Let's see who wins the race.
+<pre><code>console.log(&#039;Start&#039;); // 1
+
+setTimeout(() =&gt; {
+  console.log(&#039;Callback Queue: Timeout&#039;); // 4 (Task)
+}, 0);
+
+Promise.resolve().then(() =&gt; {
+  console.log(&#039;Microtask Queue: Promise&#039;); // 3 (Microtask)
+});
+
+console.log(&#039;End&#039;); // 2</code></pre>
+<u>Execution Order:</u>
+<font color="#60d16d">console.log('Start') runs.</font> Output: "Start"
+<font color="#60d16d">setTimeout</font> is handled by the Web API. Its&nbsp;<span style="color: rgb(206, 145, 120);">callback</span>&nbsp;is placed in the&nbsp;<b><font color="#d16060">Callback Queue</font></b>&nbsp;(or <font color="#d16060"><b>Task Queue</b></font>).
+<font color="#4fc1ff">Promise</font>.resolve().then() is <font color="#4fc1ff">handled</font>. The promise resolves immediately, and its .then() <font color="#ce9178">callback</font> is placed in the&nbsp;<b><font color="#d6ff8a">Microtask Queue</font></b>.
+<font color="#60d16d">console.log('End') runs</font>. Output: "End"
+The <font color="#60d16d">main script finishes</font>. The&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>&nbsp;is&nbsp;<b><font color="#d8ff8f">empty</font></b>.
+The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;checks for microtasks. It <i><font color="#60d16d">finds one!</font></i>
+The <font color="#4fc1ff">promise's</font> .then() callback is <font color="#4fc1ff">moved</font> to the&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>&nbsp;and runs. Output: "Microtask Queue: Promise"
+The&nbsp;<b><font color="#d6ff8a">Microtask Queue</font></b>&nbsp;is <font color="#4fc1ff">now</font>&nbsp;<b><font color="#d8ff8f">empty</font></b>.
+The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;now checks the&nbsp;<b><font color="#d16060">Callback Queue</font></b>. It finds the <font color="#60d16d">setTimeout</font> <font color="#ce9178">callback</font>.
+The <font color="#60d16d">setTimeout</font> <font color="#ce9178">callback</font> is moved to the&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>&nbsp;and <font color="#60d16d"><i>runs</i></font>. Output: "Callback Queue: Timeout"
+<u>Final Output</u>:
+<font color="#60d16d">Start</font>
+<font color="#60d16d">End</font>
+<font color="#60d16d">Microtask Queue: Promise</font>
+<font color="#60d16d">Callback Queue: Timeout</font>
+The <font color="#4fc1ff">promise</font> won because the&nbsp;<b><font color="#d6ff8a">Microtask Queue</font></b>&nbsp;has <font color="#4fc1ff"><b>priority</b></font>.
+<b><font color="#c586c0">Level 3: Advanced Tools and Real-World Use Cases</font></b>
+Now let's look at the <font color="#60d16d">more modern</font>, explicit tools for scheduling tasks and see how they fit into a practical application.
+<font size="4"><b style=""><font color="#d885ff">queueMicrotask()</font></b></font>
+<font color="#60d16d"><i>Sometimes</i></font> you need to <font color="#60d16d">schedule a </font><font color="#f6ff7a">microtask</font><font color="#60d16d"> </font><i><font color="#60d16d">without</font></i> the baggage of <font color="#60d16d">creating a whole</font> <font color="#4fc1ff">promise</font><font color="#99b8ff"> just for its .then()</font> <font color="#9ebbff">method</font>.&nbsp;<b style="font-size: large;"><font color="#d885ff">queueMicrotask()&nbsp;</font></b>is the <b><font color="#60d16d">direct</font></b>, <b style=""><font color="#e5edff">clean</font></b> way to do this.
+<u>Use Case</u>: Ensuring a piece of code runs <font color="#60d16d"><i>after</i></font> the current <font color="#60d16d"><i><b>synchronous</b></i></font> <font color="#60d16d">block</font> but <i><font color="#569cd6">before any other <b>event</b></font></i> <font color="#569cd6"><i>handlers</i></font> or <b><font color="#569cd6"><i>timeouts</i></font></b>. This is <font color="#60d16d">great for</font> <b><font color="#4fc1ff">batching</font></b> <b><font color="#569cd6">updates</font></b> or <font color="#569cd6"><i>ensuring <b>data consistency</b> before yielding back to the browser</i></font>.
+<pre><code>console.log(&#039;A&#039;);
+
+setTimeout(() =&gt; console.log(&#039;D (Task)&#039;), 0);
+
+queueMicrotask(() =&gt; console.log(&#039;C (Microtask)&#039;));
+
+console.log(&#039;B&#039;);
+
+// Output: A, B, C, D</code></pre>
+<b><font color="#da8aff">MutationObserver</font></b>
+This is a Web API used to watch for changes being made to the DOM tree. The crucial part? <b><i><font color="#60d16d">Its callback is executed as a </font><font color="#e2ffa3">microtask</font></i></b>.
+Why is this important? Imagine you have a component library. When a property changes, you update the DOM. You want to run some cleanup or notification logic immediately after that DOM change, before the browser has a chance to repaint or run any other code.&nbsp;<b><font color="#da8aff">MutationObserver</font></b>&nbsp;is perfect for this.
+<pre><code>&lt;div id=&quot;observer-test&quot;&gt;Hello&lt;/div&gt;
+
+const element = document.getElementById(&#039;observer-test&#039;);
+
+// Create an observer
+const observer = new MutationObserver(() =&gt; {
+  console.log(&#039;DOM has been mutated! (Microtask)&#039;); // 3
+});
+
+// Start observing the element for changes
+observer.observe(element, { childList: true });
+
+// Schedule a regular task
+setTimeout(() =&gt; console.log(&#039;Timeout (Task)&#039;), 0); // 4
+
+// Make a DOM change
+element.innerHTML += &#039; World!&#039;; // 1 (Sync)
+console.log(&#039;Script end&#039;); // 2 (Sync)
+
+// Output:
+// Script end
+// DOM has been mutated! (Microtask)
+// Timeout (Task)</code></pre>
+The mutation happens <font color="#60d16d">synchronously</font>, which queues a&nbsp;<span style="color: rgb(246, 255, 122);">microtask</span>. That&nbsp;<span style="color: rgb(246, 255, 122);">microtask</span>&nbsp;runs before the setTimeout task.
+The Grand Finale: <u><b>A Practical Weather App Example</b></u>
+Let's tie it all together. We'll build a tiny (conceptual) weather fetching function that demonstrates the interplay of all these concepts.
+<pre><code>&lt;button id=&quot;getWeatherBtn&quot;&gt;Get Weather for London&lt;/button&gt;
+&lt;div id=&quot;status&quot;&gt;&lt;/div&gt;
+&lt;div id=&quot;result&quot;&gt;&lt;/div&gt;
+
+const btn = document.getElementById(&#039;getWeatherBtn&#039;);
+const statusDiv = document.getElementById(&#039;status&#039;);
+const resultDiv = document.getElementById(&#039;result&#039;);
+
+btn.addEventListener(&#039;click&#039;, () =&gt; {
+  // 1. Event handler is a TASK
+  console.log(&#039;Button clicked. Event handler task starts.&#039;);
+
+  // 2. Immediate UI update (sync)
+  statusDiv.textContent = &#039;Fetching weather...&#039;;
+  resultDiv.textContent = &#039;&#039;;
+
+  // 3. Kick off a network request (Web API)
+  fetch(&#039;https://api.weatherapi.com/v1/current.json?key=YOUR_API_KEY&amp;q=London&#039;)
+    .then(response =&gt; {
+      // 6. This .then() callback is a MICROTASK
+      console.log(&#039;Fetch promise resolved. In first .then() microtask.&#039;);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json(); // Returns a new promise
+    })
+    .then(data =&gt; {
+      // 7. This chained .then() callback is also a MICROTASK
+      console.log(&#039;JSON promise resolved. In second .then() microtask.&#039;);
+      statusDiv.textContent = &#039;Weather for London:&#039;;
+      resultDiv.textContent = `${data.current.temp_c}°C, ${data.current.condition.text}`;
+    })
+    .catch(error =&gt; {
+      // This .catch() is also a MICROTASK if an error occurs
+      console.error(&#039;Fetch failed:&#039;, error);
+      statusDiv.textContent = &#039;Failed to fetch weather.&#039;;
+    });
+
+  // 4. Schedule a microtask to run right after this event handler task
+  queueMicrotask(() =&gt; {
+    console.log(&#039;A microtask scheduled right after fetch was initiated.&#039;);
+  });
+  
+  // 5. Schedule a regular task to run later
+  setTimeout(() =&gt; {
+    console.log(&#039;A setTimeout task scheduled in the click handler.&#039;);
+  }, 0);
+
+  console.log(&#039;Event handler task finished.&#039;);
+});</code></pre>
+<u>Walkthrough of a button click</u>:
+You click the button. The <font color="#60d16d">browser</font> <font color="#60d16d"><i><b>puts</b></i></font> the <font color="#60d16d">click event handler</font> <font color="#ce9178">task</font> into the&nbsp;<b><font color="#d16060">Callback Queue</font></b>.
+The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;<b><font color="#60d16d"><i>picks</i></font></b> it up (<font color="#4fc1ff" size="2"><i>assuming the&nbsp;</i></font><span style="color: rgb(128, 246, 255);">Call Stack</span><font color="#4fc1ff" size="2"><i>&nbsp;is&nbsp;</i></font><b><font color="#d8ff8f">empty</font></b>) and <b><i><font color="#60d16d">executes</font></i></b> it.
+<pre><code>Logs: &quot;Button clicked. Event handler task starts.&quot;</code></pre>
+The "Fetching weather..." text is <i><font color="#60d16d">updated</font></i> <b><i><font color="#60d16d">synchronously</font></i></b>.
+fetch is <font color="#60d16d">called</font>.&nbsp;<b style="color: rgb(231, 255, 51);">it's a Web API</b>. The <font color="#60d16d">browser</font> <i><font color="#60d16d">starts</font></i> the network request in the <b><font color="#60d16d"><i>background</i></font></b>.
+<b style="font-size: large;"><font color="#d885ff">queueMicrotask()</font></b>&nbsp;is called. Its <font color="#ce9178">callback</font> is <i><font color="#60d16d">placed</font></i> in the&nbsp;<b><font color="#d6ff8a">Microtask Queue</font></b>.
+setTimeout is <font color="#60d16d">called</font>. Its callback is <font color="#60d16d"><i>placed</i></font> in the&nbsp;<b><font color="#d16060">Callback Queue</font></b>&nbsp;(<i><font color="#60d16d">after</font></i> a <b><font color="#60d16d">0</font></b>ms <font color="#60d16d">delay</font>).
+<font color="#60d16d">Logs</font>: "Event handler task finished." The <font color="#60d16d">click handler task</font> is <font color="#60d16d"><i>now done</i></font>. The&nbsp;<span style="color: rgb(128, 246, 255);">Call Stack</span>&nbsp;is&nbsp;<b><font color="#d8ff8f">empty</font></b>.
+The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;<i><b><font color="#60d16d">checks</font></b></i> the&nbsp;<b><font color="#d6ff8a">Microtask Queue</font></b>&nbsp;first. It finds the&nbsp;<b style="font-size: large;"><font color="#d885ff">queueMicrotask</font></b>&nbsp;<font color="#ce9178">callback</font>.
+It <font color="#60d16d"><b><i><u>executes</u></i></b></font> it. <font color="#60d16d">Logs</font>: "A microtask scheduled right after fetch was initiated."
+The network request to the weather API <font size="2" color="#60d16d"><i>is still in progress</i></font>...
+The&nbsp;<b><font color="#d6ff8a">Microtask Queue</font></b>&nbsp;is&nbsp;<b><font color="#d8ff8f">empty</font></b>. The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;<b><i><font color="#60d16d">checks</font></i></b> the&nbsp;<b><font color="#d16060">Callback Queue</font></b>. It finds the setTimeout <font color="#ce9178">callback</font>.
+It <b><i><font color="#60d16d"><u>executes</u></font></i></b> it. <font color="#60d16d">Logs</font>: "A setTimeout task scheduled in the click handler."
+<font color="#60d16d">Sometime later</font>, the network request <b><i><font color="#60d16d">completes</font></i></b> <font color="#60d16d">successfully</font>. The fetch promise resolves, and its first .then() <font color="#ce9178">callback</font> is <i><font color="#60d16d">placed</font></i> in the&nbsp;<b><font color="#d6ff8a">Microtask Queue</font></b>.
+The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;<b><i><font size="5" color="#60d16d">sees</font></i></b> the microtask, <b><u><i><font color="#60d16d">executes</font></i></u></b> it. <font color="#60d16d">Logs</font>: "Fetch promise resolved. In first .then() microtask."
+response.<font color="#60d16d">json()</font> is <i><font color="#60d16d">called</font></i>, <font color="#60d16d">which <b>also</b> returns a </font><font color="#4fc1ff">promise</font>. 
+That <font color="#4fc1ff">promise</font> <font color="#60d16d">resolves</font> almost <font color="#60d16d">instantly</font>, <i><b>placing</b></i> the second .<font color="#4fc1ff">then</font>() <font color="#ce9178">callback</font> into the&nbsp;<b><font color="#d6ff8a">Microtask Queue</font></b>.
+The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>, <font color="#60d16d">still in </font>its "process all microtasks" <font color="#60d16d" size="5">phase</font>, <font size="5" color="#60d16d"><b><i>sees</i></b></font> <font color="#60d16d">this new microtask</font>. It <b><i><u><font color="#60d16d">executes</font></u></i></b> it.
+<font color="#60d16d">Logs</font>: "JSON promise resolved. In second .then() microtask." The <b><font size="5" color="#60d16d">UI</font></b> is <i><font color="#60d16d">updated</font></i> with the weather data.
+<b><i><font color="#60d16d">All</font></i></b> <font color="#60d16d">queues</font> are now&nbsp;<b><font color="#d8ff8f">empty</font></b>. The&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;<b><i><font color="#4fc1ff">rests</font></i></b>, <font color="#60d16d">waiting</font> for the next event.
+<u><b><font color="#ff1f1f">Conclusion &amp; Summary</font></b></u>
+Mastering the&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;<font color="#60d16d"><i>means</i></font> understanding the <font color="#60d16d"><b>priority</b> of operations.</font>
+<b><font color="#60d16d">Level 1 (Beginner)</font></b>: JavaScript is single-threaded. Asynchronous operations (like setTimeout) are handled by Web APIs and their callbacks are placed in a Callback Queue to be run later when the stack is empty.
+<font color="#4fc1ff">Level 2 (Intermediate):</font> Promises introduced a high-priority Microtask Queue. The Event Loop will always empty the entire Microtask Queue before processing a single task from the Callback Queue.
+<font color="#f0a3ff"><b>Level 3 (Advanced)</b></font>: Tools like queueMicrotask and MutationObserver give you direct control over scheduling microtasks, which is critical for performing actions immediately after a DOM change or before the browser repaints.
+<font size="2">When you can look at a block of asynchronous code and mentally trace which callbacks go into which queue, you have truly leveled up as a JavaScript developer. You can now predict performance, avoid race conditions, and write robust, non-blocking code with confidence</font>.
