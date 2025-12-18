@@ -9,7 +9,10 @@ The Event Loop is JavaScript's secret to staying responsive, ensuring long tasks
 It works by continuously checking if the Call Stack is empty, and if it is, it moves a completed task from the Callback Queue onto the stack for execution. This video provides a visual deep dive into this process:
 <!-- 👇 IMPORTANT: Replace these paths with your own video and thumbnail files -->
 
-![Visualizer](./VisualizerEL.mp4)
+
+<p align="center">
+  <video src="https://manjilj.github.io/event-loop-s-v/VisualizerEL.mp4" controls="controls" style="max-width: 720px;"></video>
+</p>
 🧠 Level 3: The Full Picture (Advanced)
 Advanced understanding involves the Microtask Queue (for promises and async/await), which is always emptied with priority before the Event Loop processes the next task from the regular Macrotask Queue.
 
