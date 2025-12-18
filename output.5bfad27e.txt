@@ -204,4 +204,8 @@ Mastering the&nbsp;<b><font color="#fff199"><u>Event Loop</u></font></b>&nbsp;<f
 <b><font color="#60d16d">Level 1 (Beginner)</font></b>: JavaScript is single-threaded. Asynchronous operations (like setTimeout) are handled by Web APIs and their callbacks are placed in a Callback Queue to be run later when the stack is empty.
 <font color="#4fc1ff">Level 2 (Intermediate):</font> Promises introduced a high-priority Microtask Queue. The Event Loop will always empty the entire Microtask Queue before processing a single task from the Callback Queue.
 <font color="#f0a3ff"><b>Level 3 (Advanced)</b></font>: Tools like queueMicrotask and MutationObserver give you direct control over scheduling microtasks, which is critical for performing actions immediately after a DOM change or before the browser repaints.
+
+<h2><u>Visualizer video of Level 2-like snippet</u></h2>
+<video src="VisualizerEL.mp4" type="video/mp4" loop controls autoplay muted></video>
+
 <font size="2">When you can look at a block of asynchronous code and mentally trace which callbacks go into which queue, you have truly leveled up as a JavaScript developer. You can now predict performance, avoid race conditions, and write robust, non-blocking code with confidence</font>.
